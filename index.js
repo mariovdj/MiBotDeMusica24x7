@@ -2,8 +2,8 @@
 
 // 1. IMPORTACIONES
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
-// Importamos Player y QueryType desde 'discord-player'
-const { Player, QueryType } = require('discord-player');
+// Importamos Player, QueryType y ExtractorManager
+const { Player, QueryType, ExtractorManager } = require('discord-player');
 
 // 2. CONFIGURACIÓN E INICIALIZACIÓN
 const client = new Client({
@@ -22,6 +22,10 @@ const player = new Player(client, {
         filter: "audioonly",
     }
 });
+
+// CORRECCIÓN CLAVE: Cargar los extractores para que funcione YouTube.
+player.extractors.loadDefault();
+
 
 // El token se obtiene de la variable de entorno de Render (DISCORD_TOKEN)
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
@@ -72,9 +76,13 @@ client.on('messageCreate', async (message) => {
                 await newQueue.connect(voiceChannel);
             }
 
-            // Reproducir la pista
-            await newQueue.play(track);
+            // Añadir la pista a la cola
+            newQueue.addTrack(track);
 
+            // Si no está sonando, empezar la reproducción
+            if (!newQueue.playing) {
+                await newQueue.play();
+            }
 
             message.channel.send(`🎵 **Añadida a la cola:** **${track.title}** - Duración: ${track.duration}`);
 
